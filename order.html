@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>הזמנת סדרה · שלנו</title>
+<meta name="description" content="שלנו: הסדרה הפרטית שלכם. כל זיכרון הוא פרק. מתנה לזוגות.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bellefair&family=Rubik:wght@400;500;700&display=swap">
+<style>
+/* Layout: one centered column — short pitch, then the order form, then a thank-you state. Same wine/rose/gold look as the series site. */
+:root{--night:#140b11;--panel:#21131c;--raise:#2c1a25;--line:#3b2531;--ink:#f8eee9;--muted:#bba3ad;--rose:#f0899c;--gold:#f2c27f;
+  --f-display:"Bellefair","Frank Ruhl Libre",Georgia,serif;--f-body:"Rubik","Assistant",system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--night);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.6;
+  padding:calc(28px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(48px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  background-image:radial-gradient(60% 40% at 80% 0%,rgba(240,137,156,.16),transparent 70%),radial-gradient(50% 35% at 10% 10%,rgba(242,194,127,.12),transparent 70%)}
+main{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:26px}
+.wordmark{font-family:var(--f-display);font-size:34px;line-height:1;display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink)}
+.wordmark svg{width:.5em;height:.5em;fill:var(--rose)}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(38px,9vw,54px);line-height:1.05;margin:0;text-wrap:balance}
+h1 em{font-style:normal;color:var(--gold)}
+.lead{margin:0;color:var(--muted);font-size:17px}
+.how{list-style:none;margin:0;padding:0;display:grid;gap:12px;counter-reset:s}
+.how li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;align-items:start;counter-increment:s}
+.how li::before{content:counter(s);width:34px;height:34px;border-radius:50%;border:1px solid var(--gold);color:var(--gold);display:grid;place-items:center;font-family:var(--f-display);font-size:18px}
+.how b{display:block;font-weight:500}
+.how span{color:var(--muted);font-size:14.5px}
+.demo{display:inline-flex;align-items:center;gap:8px;color:var(--rose);font-weight:500;text-decoration:none}
+.demo:hover{text-decoration:underline}
+form{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:18px}
+form h2{margin:0;font-family:var(--f-display);font-weight:400;font-size:30px}
+.field{display:flex;flex-direction:column;gap:6px}
+label,.label{font-weight:500;font-size:15px}
+.hint{color:var(--muted);font-size:13.5px;font-weight:400}
+input[type=text],input[type=email],input[type=tel],select,textarea{font:inherit;color:var(--ink);background:var(--night);border:1px solid var(--line);border-radius:12px;padding:12px 14px;width:100%}
+textarea{min-height:110px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--rose);outline-offset:1px;border-color:transparent}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips label{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;cursor:pointer;font-weight:400}
+.chips input{accent-color:var(--rose)}
+.chips label:has(input:checked){border-color:var(--rose);background:rgba(240,137,156,.1)}
+.check{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;align-items:start;font-weight:400;font-size:14.5px}
+.check input{width:20px;height:20px;margin-top:2px;accent-color:var(--rose)}
+.check a{color:var(--gold)}
+.hp{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:14px 26px;background:var(--ink);color:var(--night);font-weight:700;font-size:17px;transition:background .2s}
+button:hover{background:var(--gold)}
+button[disabled]{opacity:.6;cursor:wait}
+button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.msg{min-height:1.4em;color:var(--rose);font-size:14.5px}
+.done{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:30px 22px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+.done svg{width:48px;height:48px;fill:var(--rose)}
+.done h2{margin:0;font-family:var(--f-display);font-weight:400;font-size:34px}
+.done p{margin:0;color:var(--muted)}
+footer{color:var(--muted);font-size:13px;text-align:center}
+footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="heart" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.4h2c.7-1.2 2.2-2.4 4.3-2.4 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21z"/></symbol></svg>
+<main>
+  <a class="wordmark" href="./">שלנו<svg><use href="#heart"/></svg></a>
+  <div>
+    <h1>הזוגיות שלכם, <em>כסדרה פרטית.</em></h1>
+  </div>
+  <p class="lead">כל זיכרון שלכם הופך לפרק: הדייט הראשון, הטיול, יום ההולדת. הכול בסדרה אחת שרק שניכם יכולים לפתוח, עם קישור פרטי וקוד שרק אתם יודעים.</p>
+  <ol class="how">
+    <li><div><b>ממלאים את הטופס</b><span>ספרו לנו מי אתם ולמה. זה לוקח דקה.</span></div></li>
+    <li><div><b>שולחים סרטונים ותמונות</b><span>אנחנו חוזרים אליכם ומסבירים מה לשלוח.</span></div></li>
+    <li><div><b>מקבלים את הסדרה</b><span>קישור פרטי, והקוד הוא התאריך שבו הכרתם.</span></div></li>
+  </ol>
+  <a class="demo" href="./#noa-ido-58ae4">לצפייה בסדרה לדוגמה (קוד: 14.03.2023) ←</a>
+
+  <form id="orderForm" novalidate>
+    <h2>הזמנת סדרה</h2>
+    <div class="field">
+      <label for="names">השמות שלכם</label>
+      <input type="text" id="names" name="names" maxlength="120" placeholder="למשל: נועה ועידו" required>
+    </div>
+    <div class="field">
+      <span class="label" id="occLabel">לאיזו הזדמנות?</span>
+      <div class="chips" role="radiogroup" aria-labelledby="occLabel">
+        <label><input type="radio" name="occasion" value="יום הולדת" checked> יום הולדת</label>
+        <label><input type="radio" name="occasion" value="יום נישואין או שנה ביחד"> יום נישואין או שנה ביחד</label>
+        <label><input type="radio" name="occasion" value="סתם כי בא לי"> סתם כי בא לי</label>
+        <label><input type="radio" name="occasion" value="אחר"> אחר</label>
+      </div>
+    </div>
+    <div class="field">
+      <label for="met_on">מתי הכרתם? <span class="hint">(זה יהיה הקוד של הסדרה. אפשר גם בערך.)</span></label>
+      <input type="text" id="met_on" name="met_on" inputmode="numeric" maxlength="40" placeholder="DD.MM.YYYY" dir="ltr" style="text-align:right">
+    </div>
+    <div class="field">
+      <label for="wish">ספרו לנו קצת <span class="hint">(לא חובה)</span></label>
+      <textarea id="wish" name="wish" maxlength="1500" placeholder="איך הכרתם, אילו רגעים תרצו שיהיו בסדרה, מתי צריך את זה מוכן..."></textarea>
+    </div>
+    <div class="field">
+      <span class="label" id="cmLabel">איך לחזור אליכם?</span>
+      <div class="chips" role="radiogroup" aria-labelledby="cmLabel">
+        <label><input type="radio" name="contact_method" value="whatsapp" checked> וואטסאפ</label>
+        <label><input type="radio" name="contact_method" value="phone"> טלפון</label>
+        <label><input type="radio" name="contact_method" value="instagram"> אינסטגרם</label>
+        <label><input type="radio" name="contact_method" value="email"> מייל</label>
+      </div>
+      <input type="text" id="contact" name="contact" maxlength="120" placeholder="מספר טלפון" aria-labelledby="cmLabel" required>
+    </div>
+    <label class="check"><input type="checkbox" id="surprise" name="surprise"><span>זו הפתעה לבן או לבת הזוג. נדאג לא לחשוף כלום.</span></label>
+    <label class="check"><input type="checkbox" id="consent" name="consent" required><span>קראתי ואני מסכים/ה ל<a href="terms.html" target="_blank" rel="noopener">תנאי השימוש ומדיניות הפרטיות</a></span></label>
+    <div class="hp" aria-hidden="true"><label for="website">אתר</label><input type="text" id="website" name="website" tabindex="-1" autocomplete="off"></div>
+    <button type="submit" id="sendBtn">שליחת הזמנה</button>
+    <div class="msg" id="msg" role="status" aria-live="polite"></div>
+  </form>
+
+  <div class="done" id="done" hidden>
+    <svg><use href="#heart"/></svg>
+    <h2>קיבלנו, תודה!</h2>
+    <p id="doneText">נחזור אליכם בהקדם כדי להתחיל לבנות את הסדרה שלכם.</p>
+  </div>
+
+  <footer><a href="terms.html">תנאי שימוש ופרטיות</a></footer>
+</main>
+<script>
+const API = "https://cgcyelohuupwfenykpgg.supabase.co/functions/v1/order";
+const $ = id => document.getElementById(id);
+const PH = { whatsapp:"מספר וואטסאפ", phone:"מספר טלפון", instagram:"שם משתמש באינסטגרם (@...)", email:"כתובת מייל" };
+const TYPE = { whatsapp:"tel", phone:"tel", instagram:"text", email:"email" };
+document.querySelectorAll('input[name=contact_method]').forEach(r => r.addEventListener("change", () => {
+  $("contact").placeholder = PH[r.value]; $("contact").type = TYPE[r.value];
+}));
+$("contact").placeholder = PH.whatsapp; $("contact").type = "tel";
+const val = n => (document.querySelector(`input[name=${n}]:checked`) || {}).value;
+
+$("orderForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const say = t => $("msg").textContent = t;
+  const order = {
+    names: $("names").value.trim(), occasion: val("occasion"), met_on: $("met_on").value.trim(),
+    wish: $("wish").value.trim(), contact_method: val("contact_method"), contact: $("contact").value.trim(),
+    surprise: $("surprise").checked, consent: $("consent").checked, website: $("website").value
+  };
+  if(order.names.length < 2){ say("כתבו את השמות שלכם."); $("names").focus(); return; }
+  if(order.contact.length < 3){ say("כתבו איך לחזור אליכם."); $("contact").focus(); return; }
+  if(!order.consent){ say("כדי לשלוח צריך לאשר את תנאי השימוש."); $("consent").focus(); return; }
+  $("sendBtn").disabled = true; say("");
+  let res;
+  try{ const r = await fetch(API, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(order) }); res = await r.json(); }
+  catch(e){ res = { status:"network" }; }
+  $("sendBtn").disabled = false;
+  if(res.status === "ok"){
+    $("orderForm").hidden = true; $("done").hidden = false;
+    if(order.surprise) $("doneText").textContent = "נחזור אליכם בהקדם, ובשקט, כדי שההפתעה תישאר הפתעה.";
+    $("done").scrollIntoView({ behavior:"smooth", block:"center" });
+    return;
+  }
+  if(res.status === "too_many") say("נשלחו כבר כמה הזמנות מהמכשיר הזה. נסו שוב בעוד שעה.");
+  else if(res.status === "bad") say("משהו בטופס חסר. בדקו את השמות ואת פרטי הקשר ונסו שוב.");
+  else say("לא הצלחנו לשלוח כרגע. בדקו את החיבור לאינטרנט ונסו שוב.");
+});
+</script>
+</body>
+</html>

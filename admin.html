@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ניהול · שלנו</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bellefair&family=Rubik:wght@400;500;700&display=swap">
+<style>
+/* Layout: sign-in card → app with a top bar, three tabs (orders, couples, new couple) and a couple drawer for episodes. Same palette as the series site, tuned for work. */
+:root{--night:#140b11;--panel:#21131c;--raise:#2c1a25;--line:#3b2531;--ink:#f8eee9;--muted:#bba3ad;--rose:#f0899c;--gold:#f2c27f;--ok:#8fd19e;--warn:#f2c27f;
+  --f-display:"Bellefair","Frank Ruhl Libre",Georgia,serif;--f-body:"Rubik","Assistant",system-ui,-apple-system,"Segoe UI",sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--night);color:var(--ink);font-family:var(--f-body);font-size:15.5px;line-height:1.55;
+  padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(40px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+main{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+.wordmark{font-family:var(--f-display);font-size:30px;line-height:1;display:inline-flex;align-items:center;gap:6px}
+.wordmark svg{width:.5em;height:.5em;fill:var(--rose)}
+h2{font-family:var(--f-display);font-weight:400;font-size:30px;margin:0}
+h3{margin:0;font-size:17px;font-weight:500}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.muted{color:var(--muted)}
+.small{font-size:13.5px}
+label{font-weight:500;font-size:14.5px;display:flex;flex-direction:column;gap:5px}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--night);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+textarea{min-height:80px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--rose);outline-offset:1px;border-color:transparent}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:12px}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);border-radius:10px;padding:9px 16px;background:var(--raise);color:var(--ink);font-weight:500}
+button:hover{border-color:var(--muted)}
+button.primary{background:var(--ink);color:var(--night);border-color:var(--ink);font-weight:700}
+button.primary:hover{background:var(--gold);border-color:var(--gold)}
+button.danger{color:var(--rose)}
+button[disabled]{opacity:.55;cursor:wait}
+button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+a{color:var(--gold)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.top .space{flex:1}
+.meter{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.meter span.bar{width:110px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.meter span.bar i{display:block;height:100%;background:var(--ok)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--night);border-color:var(--ink)}
+.pill{display:inline-block;font-size:12px;font-weight:700;padding:1px 9px;border-radius:999px;background:var(--raise);border:1px solid var(--line)}
+.pill.new{background:var(--rose);color:var(--night);border-color:var(--rose)}
+.pill.in_progress{background:var(--warn);color:var(--night);border-color:var(--warn)}
+.pill.done{background:var(--ok);color:var(--night);border-color:var(--ok)}
+.pill.surprise{border-color:var(--gold);color:var(--gold)}
+.list{display:flex;flex-direction:column;gap:12px}
+.item{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.item .head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
+.item p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:14px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;overflow-wrap:anywhere}
+.ep{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.ep:first-child{border-top:0}
+.ep .n{font-family:var(--f-display);font-size:24px;color:var(--muted);text-align:center}
+.msg{min-height:1.3em;font-size:14px;color:var(--rose)}
+.msg.ok{color:var(--ok)}
+.share{background:var(--night);border:1px dashed var(--line);border-radius:12px;padding:12px;white-space:pre-wrap;font-size:14.5px;overflow-wrap:anywhere}
+progress{width:100%;height:8px;accent-color:var(--rose)}
+.empty{color:var(--muted);text-align:center;padding:24px}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="heart" viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.3 3 4.5 6.7 4.5c2.1 0 3.6 1.2 4.3 2.4h2c.7-1.2 2.2-2.4 4.3-2.4 3.7 0 5.8 3.8 4.3 7.2C19.5 16.4 12 21 12 21z"/></symbol></svg>
+<main>
+  <!-- sign in -->
+  <section id="signin" class="card" style="max-width:420px;margin:12vh auto 0;width:100%">
+    <span class="wordmark">שלנו<svg><use href="#heart"/></svg></span>
+    <h2>ניהול</h2>
+    <form id="signinForm" class="list">
+      <label>קוד הבעלים<input type="password" id="token" autocomplete="current-password" placeholder="הדבק כאן את הקוד הסודי"></label>
+      <label style="flex-direction:row;align-items:center;gap:8px;font-weight:400"><input type="checkbox" id="remember" style="width:auto"> לזכור במכשיר הזה</label>
+      <button class="primary" type="submit">כניסה</button>
+      <div class="msg" id="signinMsg" role="status"></div>
+    </form>
+  </section>
+
+  <!-- app -->
+  <section id="app" hidden class="list">
+    <div class="top">
+      <span class="wordmark">שלנו<svg><use href="#heart"/></svg></span>
+      <span class="space"></span>
+      <span class="meter" id="meter" title="נפח אחסון בשימוש מתוך 1GB במסלול החינמי"><span class="bar"><i id="meterBar"></i></span><span id="meterText">...</span></span>
+      <button id="signout">יציאה</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="orders" aria-selected="true">הזמנות <span class="pill new" id="newCount" hidden></span></button>
+      <button role="tab" data-tab="couples" aria-selected="false">זוגות</button>
+      <button role="tab" data-tab="create" aria-selected="false">זוג חדש</button>
+    </div>
+
+    <!-- orders -->
+    <div id="tab-orders" class="list"></div>
+
+    <!-- couples -->
+    <div id="tab-couples" class="list" hidden></div>
+
+    <!-- new couple -->
+    <form id="tab-create" class="card" hidden>
+      <h2>סדרה לזוג חדש</h2>
+      <div class="grid">
+        <label>שמות הזוג<input id="cNames" placeholder="נועה ועידו" required></label>
+        <label>שם הסדרה<input id="cTitle" value="איך הכל התחיל" required></label>
+        <label>התאריך שבו הכירו<input id="cDate" type="date"></label>
+        <label>הקוד<input id="cCode" inputmode="numeric" placeholder="נבנה אוטומטית מהתאריך" dir="ltr"></label>
+        <label>אותיות לאווטאר<input id="cInitials" placeholder="נ ע" maxlength="5"></label>
+        <label>שם לקישור (באנגלית)<input id="cSlug" placeholder="noa-ido" dir="ltr"></label>
+      </div>
+      <label>תקציר הסדרה<textarea id="cBlurb" placeholder="כמה שורות על הסיפור שלהם"></textarea></label>
+      <div class="row"><button class="primary" type="submit" id="cBtn">יצירת הסדרה</button><span class="msg" id="cMsg" role="status"></span></div>
+      <div id="cResult" hidden class="list">
+        <h3>הסדרה נוצרה. זו ההודעה לשליחה לזוג:</h3>
+        <div class="share" id="cShare"></div>
+        <div class="row"><button id="cCopy" type="button">העתקת ההודעה</button><button id="cGo" type="button">לניהול הפרקים</button></div>
+      </div>
+    </form>
+
+    <!-- couple drawer -->
+    <section id="couple" class="list" hidden>
+      <div class="row"><button id="back">→ חזרה לזוגות</button></div>
+      <div class="card">
+        <h2 id="cpTitle"></h2>
+        <div class="row small"><span class="muted">קישור:</span><a id="cpLink" target="_blank" rel="noopener"></a><button id="cpCopy" type="button">העתקה</button></div>
+        <div id="cpEps"></div>
+      </div>
+      <form id="epForm" class="card">
+        <h3>הוספת פרק</h3>
+        <div class="grid">
+          <label>סוג<select id="eKind"><option value="episode">פרק</option><option value="special">ספיישל</option></select></label>
+          <label>עונה<input id="eSeason" type="number" min="1" value="1"></label>
+          <label>מספר פרק<input id="eNumber" type="number" min="1"></label>
+          <label>שם הפרק<input id="eTitle" required placeholder="הדייט בנמל"></label>
+          <label>מתי זה קרה<input id="eAired" placeholder="אפריל 2023"></label>
+          <label>אייקון<select id="eIcon">
+            <option value="heart">לב</option><option value="chat">הודעות</option><option value="sea">ים</option><option value="hill">טבע</option>
+            <option value="table">ארוחה</option><option value="key">דירה</option><option value="plane">טיסה</option><option value="cake">יום הולדת</option>
+            <option value="bench">ספסל</option><option value="ring">הצעה</option><option value="laugh">צחוקים</option><option value="dog">חיית מחמד</option><option value="cam">מאחורי הקלעים</option>
+          </select></label>
+        </div>
+        <label>תקציר הפרק<textarea id="eDesc" placeholder="משפט או שניים"></textarea></label>
+        <div class="grid">
+          <label>סרטון (mp4, עד 50MB)<input id="eVideo" type="file" accept="video/mp4,video/quicktime,video/webm,.mp4,.mov,.m4v,.webm"></label>
+          <label>תמונה לפרק (לא חובה)<input id="ePoster" type="file" accept="image/jpeg,image/png,image/webp"></label>
+        </div>
+        <p class="small muted" id="eInfo">אורך הסרטון יתמלא אוטומטית. טיפ: כווצו סרטונים לפני ההעלאה (למשל 720p) כדי לחסוך מקום.</p>
+        <progress id="eProg" value="0" max="100" hidden></progress>
+        <div class="row"><button class="primary" type="submit" id="eBtn">העלאת הפרק</button><span class="msg" id="eMsg" role="status"></span></div>
+      </form>
+    </section>
+  </section>
+</main>
+
+<script>
+const API = "https://cgcyelohuupwfenykpgg.supabase.co/functions/v1/admin";
+const SITE = "https://itaybenezri01-dot.github.io/";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const PALETTES = [["#f6b6a8","#c95a78"],["#9fd0dd","#3f6d93"],["#f7a8b6","#a93a5d"],["#b9dba8","#4f7d4b"],["#f6cf9a","#b8703f"],["#f3d9a8","#a8763f"],["#b8c6ec","#4f5f9e"],["#fbbfcf","#c25478"],["#f9c99e","#c46d5e"],["#f4d7a6","#a24767"]];
+let TOKEN = "", COUPLES = [], ORDERS = [], current = null, durationLabel = "";
+
+/* ---------- token storage: this tab only, or this device if asked ---------- */
+const store = {
+  get(){ try{ return sessionStorage.getItem("shelanu_admin") || localStorage.getItem("shelanu_admin") || ""; }catch(e){ return ""; } },
+  set(v, remember){ try{ sessionStorage.setItem("shelanu_admin", v); if(remember) localStorage.setItem("shelanu_admin", v); }catch(e){} },
+  clear(){ try{ sessionStorage.removeItem("shelanu_admin"); localStorage.removeItem("shelanu_admin"); }catch(e){} }
+};
+async function call(action, extra = {}){
+  const r = await fetch(API, { method:"POST", headers:{ "Content-Type":"application/json", "x-admin-token": TOKEN }, body: JSON.stringify({ action, ...extra }) });
+  const j = await r.json().catch(() => ({}));
+  if(r.status === 401){ signOut("הקוד לא נכון או שפג תוקפו."); throw new Error("unauthorized"); }
+  if(!r.ok) throw new Error(j.error || "שגיאה");
+  return j;
+}
+function upload(file, slug, onProgress){
+  return new Promise((resolve, reject) => {
+    const fd = new FormData(); fd.append("slug", slug); fd.append("file", file);
+    const x = new XMLHttpRequest(); x.open("POST", API); x.setRequestHeader("x-admin-token", TOKEN);
+    x.upload.onprogress = e => e.lengthComputable && onProgress && onProgress(e.loaded / e.total);
+    x.onload = () => { let j = {}; try{ j = JSON.parse(x.responseText); }catch(e){}
+      x.status === 200 && j.path ? resolve(j.path) : reject(new Error(j.error || "ההעלאה נכשלה")); };
+    x.onerror = () => reject(new Error("אין חיבור"));
+    x.send(fd);
+  });
+}
+
+/* ---------- sign in / out ---------- */
+async function signIn(token, remember){
+  TOKEN = token;
+  try{ await call("whoami"); }catch(e){ return false; }
+  store.set(token, remember);
+  $("signin").hidden = true; $("app").hidden = false;
+  refresh();
+  return true;
+}
+function signOut(msg){ store.clear(); TOKEN = ""; $("app").hidden = true; $("signin").hidden = false; $("signinMsg").textContent = msg || ""; }
+$("signinForm").addEventListener("submit", async ev => {
+  ev.preventDefault(); $("signinMsg").textContent = "בודק...";
+  const ok = await signIn($("token").value.trim(), $("remember").checked);
+  if(!ok && !$("signinMsg").textContent.includes("לא נכון")) $("signinMsg").textContent = "הקוד לא נכון.";
+});
+$("signout").addEventListener("click", () => signOut());
+
+/* ---------- tabs ---------- */
+function showTab(name){
+  document.querySelectorAll("[role=tab]").forEach(b => b.setAttribute("aria-selected", b.dataset.tab === name));
+  ["orders","couples","create"].forEach(t => $("tab-" + t).hidden = t !== name);
+  $("couple").hidden = true;
+}
+document.querySelectorAll("[role=tab]").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+
+async function refresh(){
+  try{
+    const [o, c, s] = await Promise.all([call("orders"), call("list"), call("storage")]);
+    ORDERS = o.data || []; COUPLES = c.couples || [];
+    const used = s.data || 0, pct = Math.min(100, used / (1024**3) * 100);
+    $("meterBar").style.width = pct + "%"; $("meterBar").style.background = pct > 85 ? "var(--rose)" : pct > 60 ? "var(--warn)" : "var(--ok)";
+    $("meterText").innerHTML = `<bdi>${(used/1024/1024).toFixed(used < 10*1024*1024 ? 1 : 0)}MB</bdi> מתוך <bdi>1GB</bdi>`;
+    renderOrders(); renderCouples();
+  }catch(e){ if(e.message !== "unauthorized") $("tab-orders").innerHTML = `<div class="empty">לא הצלחנו לטעון: ${esc(e.message)}</div>`; }
+}
+
+/* ---------- orders ---------- */
+const STATUS = { new:"חדשה", in_progress:"בעבודה", done:"הושלמה", cancelled:"בוטלה" };
+const METHOD = { whatsapp:"וואטסאפ", phone:"טלפון", instagram:"אינסטגרם", email:"מייל" };
+function contactLink(o){
+  const v = o.contact.trim();
+  if(o.contact_method === "whatsapp"){ const d = v.replace(/\D/g,"").replace(/^0/, "972"); return `<a href="https://wa.me/${esc(d)}" target="_blank" rel="noopener">${esc(v)}</a>`; }
+  if(o.contact_method === "instagram"){ const u = v.replace(/^@/, ""); return `<a href="https://instagram.com/${esc(encodeURIComponent(u))}" target="_blank" rel="noopener">${esc(v)}</a>`; }
+  return esc(v);   // phone numbers and emails shown as text: tel/mailto links are unreliable inside some app views
+}
+function renderOrders(){
+  const n = ORDERS.filter(o => o.status === "new").length;
+  $("newCount").hidden = !n; $("newCount").textContent = n;
+  if(!ORDERS.length){ $("tab-orders").innerHTML = `<div class="empty">אין הזמנות עדיין. כשמישהו ימלא את טופס ההזמנה, הוא יופיע כאן.</div>`; return; }
+  $("tab-orders").innerHTML = ORDERS.map(o => `
+    <article class="item" data-id="${esc(o.id)}">
+      <div class="head"><h3>${esc(o.names)}</h3><span class="row"><span class="pill ${esc(o.status)}">${STATUS[o.status] || esc(o.status)}</span>${o.surprise ? '<span class="pill surprise">הפתעה</span>' : ""}</span></div>
+      <dl class="kv">
+        <dt>הזדמנות</dt><dd>${esc(o.occasion || "-")}</dd>
+        <dt>הכירו ב</dt><dd>${esc(o.met_on || "-")}</dd>
+        <dt>${METHOD[o.contact_method] || "קשר"}</dt><dd>${contactLink(o)}</dd>
+        <dt>התקבלה</dt><dd>${new Date(o.created_at).toLocaleString("he-IL", { dateStyle:"short", timeStyle:"short" })}</dd>
+      </dl>
+      ${o.wish ? `<p>${esc(o.wish)}</p>` : ""}
+      <div class="row">
+        <select data-status aria-label="סטטוס">${Object.entries(STATUS).map(([k,v]) => `<option value="${k}" ${k === o.status ? "selected" : ""}>${v}</option>`).join("")}</select>
+        <button data-make>יצירת סדרה מההזמנה</button>
+      </div>
+    </article>`).join("");
+}
+$("tab-orders").addEventListener("change", async ev => {
+  const sel = ev.target.closest("[data-status]"); if(!sel) return;
+  const id = sel.closest("[data-id]").dataset.id;
+  await call("order_status", { id, status: sel.value }); const o = ORDERS.find(x => x.id === id); if(o) o.status = sel.value; renderOrders();
+});
+$("tab-orders").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-make]"); if(!b) return;
+  const o = ORDERS.find(x => x.id === b.closest("[data-id]").dataset.id);
+  showTab("create"); $("cResult").hidden = true;
+  $("cNames").value = o.names; $("cInitials").value = initialsOf(o.names);
+  const m = (o.met_on || "").match(/(\d{1,2})\D+(\d{1,2})\D+(\d{4})/);
+  if(m){ $("cDate").value = `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`; codeFromDate(); }
+  $("cBlurb").value = o.wish || "";
+});
+
+/* ---------- couples ---------- */
+function renderCouples(){
+  if(!COUPLES.length){ $("tab-couples").innerHTML = `<div class="empty">אין זוגות עדיין.</div>`; return; }
+  $("tab-couples").innerHTML = COUPLES.map(c => `
+    <article class="item"><div class="head"><h3>${esc(c.names)}</h3><span class="muted small">${esc(c.episodes)} פרקים</span></div>
+      <div class="muted small">${esc(c.title)} · <a href="${SITE}#${esc(c.slug)}" target="_blank" rel="noopener">${SITE.replace("https://","")}#${esc(c.slug)}</a></div>
+      <div class="row"><button data-open="${esc(c.slug)}">ניהול פרקים</button></div></article>`).join("");
+}
+$("tab-couples").addEventListener("click", ev => { const b = ev.target.closest("[data-open]"); if(b) openCouple(b.dataset.open); });
+
+async function openCouple(slug){
+  current = COUPLES.find(c => c.slug === slug) || { slug, names: slug, title: "" };
+  ["orders","couples","create"].forEach(t => $("tab-" + t).hidden = true);
+  $("couple").hidden = false;
+  $("cpTitle").textContent = `${current.names} · ${current.title}`;
+  $("cpLink").href = SITE + "#" + slug; $("cpLink").textContent = SITE.replace("https://","") + "#" + slug;
+  await loadEpisodes();
+}
+async function loadEpisodes(){
+  $("cpEps").innerHTML = `<div class="muted small">טוען פרקים...</div>`;
+  const { data } = await call("episodes", { slug: current.slug });
+  const eps = data || [];
+  const nums = eps.filter(e => e.kind === "episode").map(e => e.number || 0);
+  $("eNumber").value = (nums.length ? Math.max(...nums) : 0) + 1;
+  const seasons = eps.filter(e => e.kind === "episode").map(e => e.season || 1);
+  $("eSeason").value = seasons.length ? Math.max(...seasons) : 1;
+  $("cpEps").innerHTML = eps.length ? eps.map(e => `
+    <div class="ep"><span class="n">${e.kind === "special" ? "★" : esc(e.number ?? "")}</span>
+      <span><b>${esc(e.title)}</b><div class="muted small">${e.kind === "special" ? "ספיישל" : "עונה " + esc(e.season)}${e.aired ? " · " + esc(e.aired) : ""}${e.duration ? " · " + esc(e.duration) : ""}${e.has_video ? "" : " · בלי סרטון"}</div></span>
+      <button class="danger" data-del="${esc(e.id)}" data-title="${esc(e.title)}">מחיקה</button></div>`).join("")
+    : `<div class="empty">אין פרקים עדיין. הוסיפו את הפרק הראשון למטה.</div>`;
+}
+$("cpEps").addEventListener("click", async ev => {
+  const b = ev.target.closest("[data-del]"); if(!b) return;
+  if(b.dataset.confirm !== "1"){ b.dataset.confirm = "1"; b.textContent = "בטוח? לחצו שוב"; setTimeout(() => { b.dataset.confirm = ""; b.textContent = "מחיקה"; }, 4000); return; }
+  b.disabled = true; await call("delete_episode", { id: b.dataset.del }); await loadEpisodes(); refresh();
+});
+$("back").addEventListener("click", () => showTab("couples"));
+$("cpCopy").addEventListener("click", () => copy($("cpLink").href, $("cpCopy")));
+
+/* ---------- new couple ---------- */
+function initialsOf(names){ return names.split(/\s+ו|\s+&\s+|\s+and\s+|,|\s+/).map(s => s.replace(/^ו/,"").trim()).filter(Boolean).slice(0,2).map(s => s[0]).join(" "); }
+function codeFromDate(){ const v = $("cDate").value; if(!v) return; const [y,m,d] = v.split("-"); $("cCode").value = `${d}.${m}.${y}`; }
+$("cNames").addEventListener("input", () => { if(!$("cInitials").dataset.touched) $("cInitials").value = initialsOf($("cNames").value); });
+$("cInitials").addEventListener("input", () => $("cInitials").dataset.touched = "1");
+$("cDate").addEventListener("change", codeFromDate);
+let created = null;
+$("tab-create").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const say = (t, ok) => { $("cMsg").textContent = t; $("cMsg").classList.toggle("ok", !!ok); };
+  const code = $("cCode").value.trim();
+  if(code.replace(/\D/g,"").length < 4){ say("הקוד צריך לפחות 4 ספרות. בחרו תאריך או כתבו קוד."); return; }
+  $("cBtn").disabled = true; say("יוצר...", true);
+  try{
+    const r = await call("create_couple", { names: $("cNames").value.trim(), title: $("cTitle").value.trim() || "איך הכל התחיל",
+      blurb: $("cBlurb").value.trim() || null, together_since: $("cDate").value || null,
+      initials: $("cInitials").value.trim().split(/\s+/).filter(Boolean).slice(0,2), code, slug_hint: $("cSlug").value.trim() || null });
+    created = r.slug; say("נוצר!", true);
+    const link = SITE + "#" + r.slug;
+    $("cShare").textContent = `היי ${$("cNames").value.trim()} ❤️\nהסדרה הפרטית שלכם מוכנה!\n\nהקישור: ${link}\nהקוד: התאריך שבו הכרתם (יום, חודש ושנה)\n\nצפייה נעימה 🎬\nשלנו`;
+    $("cResult").hidden = false;
+    refresh();
+  }catch(e){ say("לא נוצר: " + e.message); }
+  $("cBtn").disabled = false;
+});
+$("cCopy").addEventListener("click", () => copy($("cShare").textContent, $("cCopy")));
+$("cGo").addEventListener("click", async () => { await refresh(); openCouple(created); });
+
+/* ---------- add episode ---------- */
+$("eVideo").addEventListener("change", () => {
+  const f = $("eVideo").files[0]; durationLabel = ""; if(!f) return;
+  const mb = f.size / 1024 / 1024;
+  $("eInfo").textContent = `${f.name} · ${mb.toFixed(1)}MB` + (mb > 50 ? " · גדול מדי. כווצו לפני ההעלאה (עד 50MB)." : "");
+  const v = document.createElement("video"); v.preload = "metadata"; v.src = URL.createObjectURL(f);
+  v.onloadedmetadata = () => { const s = Math.round(v.duration || 0); if(s){ durationLabel = `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`; $("eInfo").textContent += ` · ${durationLabel}`; } URL.revokeObjectURL(v.src); };
+});
+$("eKind").addEventListener("change", () => { const sp = $("eKind").value === "special"; $("eNumber").disabled = sp; $("eSeason").disabled = sp; });
+$("epForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const say = (t, ok) => { $("eMsg").textContent = t; $("eMsg").classList.toggle("ok", !!ok); };
+  const vf = $("eVideo").files[0], pf = $("ePoster").files[0];
+  if(!$("eTitle").value.trim()){ say("כתבו שם לפרק."); return; }
+  if(vf && vf.size > 50*1024*1024){ say("הסרטון גדול מ-50MB. כווצו אותו קודם."); return; }
+  $("eBtn").disabled = true; $("eProg").hidden = false; $("eProg").value = 0;
+  try{
+    let video_path = null, poster_path = null;
+    if(vf){ say("מעלה סרטון...", true); video_path = await upload(vf, current.slug, p => $("eProg").value = p * (pf ? 85 : 100)); }
+    if(pf){ say("מעלה תמונה...", true); poster_path = await upload(pf, current.slug, p => $("eProg").value = (vf ? 85 : 0) + p * (vf ? 15 : 100)); }
+    const kind = $("eKind").value, count = document.querySelectorAll("#cpEps .ep").length;
+    await call("add_episode", { slug: current.slug, episode: {
+      kind, season: kind === "episode" ? Number($("eSeason").value) || 1 : 1, number: kind === "episode" ? Number($("eNumber").value) || null : null,
+      title: $("eTitle").value.trim(), aired: $("eAired").value.trim() || null, duration: durationLabel || null,
+      description: $("eDesc").value.trim() || null, icon: $("eIcon").value, colors: PALETTES[count % PALETTES.length],
+      video_path, poster_path } });
+    say("הפרק עלה לסדרה!", true);
+    ["eTitle","eAired","eDesc"].forEach(id => $(id).value = ""); $("eVideo").value = ""; $("ePoster").value = ""; durationLabel = "";
+    $("eInfo").textContent = "אורך הסרטון יתמלא אוטומטית.";
+    await loadEpisodes(); refresh();
+  }catch(e){ say("לא עלה: " + e.message); }
+  $("eBtn").disabled = false; setTimeout(() => $("eProg").hidden = true, 800);
+});
+
+/* ---------- helpers ---------- */
+async function copy(text, btn){
+  const old = btn.textContent;
+  try{ await navigator.clipboard.writeText(text); btn.textContent = "הועתק ✓"; }
+  catch(e){ const r = document.createRange(); const n = btn.closest(".list, .card").querySelector(".share, a"); if(n){ r.selectNodeContents(n); const s = getSelection(); s.removeAllRanges(); s.addRange(r); } btn.textContent = "סמנו והעתיקו"; }
+  setTimeout(() => btn.textContent = old, 2000);
+}
+
+/* auto sign-in when a code is remembered */
+(async () => { const t = store.get(); if(t){ $("token").value = t; await signIn(t, false); } })();
+</script>
+</body>
+</html>
