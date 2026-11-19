@@ -130,6 +130,15 @@ progress{width:100%;height:8px;accent-color:var(--rose)}
         <div class="row small"><span class="muted">קישור:</span><a id="cpLink" target="_blank" rel="noopener"></a><button id="cpCopy" type="button">העתקה</button></div>
         <div id="cpEps"></div>
       </div>
+      <form id="codeForm" class="card">
+        <h3>החלפת קוד הכניסה</h3>
+        <p class="small muted">אם הזוג שכח את הקוד או שהוא דלף. אחרי ההחלפה הקוד הישן מפסיק לעבוד.</p>
+        <div class="grid">
+          <label>תאריך חדש<input id="kDate" type="date"></label>
+          <label>או קוד חדש<input id="kCode" inputmode="numeric" placeholder="למשל 14.03.2023" dir="ltr"></label>
+        </div>
+        <div class="row"><button class="primary" type="submit" id="kBtn">החלפת הקוד</button><span class="msg" id="kMsg" role="status"></span></div>
+      </form>
       <form id="epForm" class="card">
         <h3>הוספת פרק</h3>
         <div class="grid">
@@ -285,6 +294,7 @@ async function openCouple(slug){
   ["orders","couples","create"].forEach(t => $("tab-" + t).hidden = true);
   $("couple").hidden = false;
   $("cpTitle").textContent = `${current.names} · ${current.title}`;
+  $("kMsg").textContent = "";
   $("cpLink").href = SITE + "#" + slug; $("cpLink").textContent = SITE.replace("https://","") + "#" + slug;
   await loadEpisodes();
 }
@@ -370,6 +380,19 @@ $("epForm").addEventListener("submit", async ev => {
     await loadEpisodes(); refresh();
   }catch(e){ say("לא עלה: " + e.message); }
   $("eBtn").disabled = false; setTimeout(() => $("eProg").hidden = true, 800);
+});
+
+/* ---------- change a couple's code ---------- */
+$("kDate").addEventListener("change", () => { const v = $("kDate").value; if(v){ const [y,m,d] = v.split("-"); $("kCode").value = `${d}.${m}.${y}`; } });
+$("codeForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const say = (t, ok) => { $("kMsg").textContent = t; $("kMsg").classList.toggle("ok", !!ok); };
+  const code = $("kCode").value.trim();
+  if(code.replace(/\D/g,"").length < 4){ say("הקוד צריך לפחות 4 ספרות."); return; }
+  $("kBtn").disabled = true;
+  try{ const r = await call("set_code", { slug: current.slug, code }); say(r.ok ? `הקוד הוחלף ל-${code}. שלחו אותו לזוג.` : "לא נמצא הזוג.", r.ok); $("kCode").value = ""; $("kDate").value = ""; }
+  catch(e){ say("לא הוחלף: " + e.message); }
+  $("kBtn").disabled = false;
 });
 
 /* ---------- helpers ---------- */
