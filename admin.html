@@ -254,17 +254,17 @@ function renderOrders(){
   $("tab-orders").innerHTML = ORDERS.map(o => `
     <article class="item" data-id="${esc(o.id)}">
       <div class="head"><h3>${esc(o.names)}</h3><span class="row"><span class="pill ${esc(o.status)}">${STATUS[o.status] || esc(o.status)}</span>${o.surprise ? '<span class="pill surprise">הפתעה</span>' : ""}</span></div>
-      <div class="order-type"><b>${o.order_type === "episode" ? "פרק נוסף" : "סדרה חדשה"}</b> · ${esc(o.episodes || 1)} ${Number(o.episodes) === 1 ? "פרק" : "פרקים"} · לגבייה: <b>${orderTotal(o)} ₪</b></div>
+      <div class="order-type"><b>${o.order_type === "episode" ? "פרק נוסף" : "סדרה חדשה"}</b>${o.series_title ? ` לסדרה <b>"${esc(o.series_title)}"</b>` : ""} · ${esc(o.episodes || 1)} ${Number(o.episodes) === 1 ? "פרק" : "פרקים"} · לגבייה: <b>${orderTotal(o)} ₪</b></div>
       <dl class="kv">
-        <dt>הזדמנות</dt><dd>${esc(o.occasion || "-")}</dd>
-        <dt>הכירו ב</dt><dd>${esc(o.met_on || "-")}</dd>
+        ${o.series_slug ? "" : `<dt>הזדמנות</dt><dd>${esc(o.occasion || "-")}</dd>
+        <dt>הכירו ב</dt><dd>${esc(o.met_on || "-")}</dd>`}
         <dt>${METHOD[o.contact_method] || "קשר"}</dt><dd>${contactLink(o)}</dd>
         <dt>התקבלה</dt><dd>${new Date(o.created_at).toLocaleString("he-IL", { dateStyle:"short", timeStyle:"short" })}</dd>
       </dl>
       ${o.wish ? `<p>${esc(o.wish)}</p>` : ""}
       <div class="row">
         <select data-status aria-label="סטטוס">${Object.entries(STATUS).map(([k,v]) => `<option value="${k}" ${k === o.status ? "selected" : ""}>${v}</option>`).join("")}</select>
-        <button data-make>יצירת סדרה מההזמנה</button>
+        ${o.series_slug ? `<button data-open-series="${esc(o.series_slug)}">לסדרה שלהם, להוספת הפרק</button>` : `<button data-make>יצירת סדרה מההזמנה</button>`}
       </div>
     </article>`).join("");
 }
@@ -274,6 +274,8 @@ $("tab-orders").addEventListener("change", async ev => {
   await call("order_status", { id, status: sel.value }); const o = ORDERS.find(x => x.id === id); if(o) o.status = sel.value; renderOrders();
 });
 $("tab-orders").addEventListener("click", ev => {
+  const os = ev.target.closest("[data-open-series]");
+  if(os){ showTab("couples"); openCouple(os.dataset.openSeries); return; }
   const b = ev.target.closest("[data-make]"); if(!b) return;
   const o = ORDERS.find(x => x.id === b.closest("[data-id]").dataset.id);
   showTab("create"); $("cResult").hidden = true;

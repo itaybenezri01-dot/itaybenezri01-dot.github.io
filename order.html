@@ -50,6 +50,11 @@ button{font:inherit;cursor:pointer;border:0;border-radius:999px;padding:14px 26p
 button:hover{background:var(--gold)}
 button[disabled]{opacity:.6;cursor:wait}
 button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.forseries{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;padding:14px 16px;border:1px solid rgba(242,194,127,.4);border-radius:14px;background:rgba(242,194,127,.07)}
+.forseries span{color:var(--muted);font-size:14px}
+.forseries b{font-family:var(--f-display);font-weight:400;font-size:22px;color:var(--gold)}
+.linkbtn{background:none;padding:0;border-radius:0;color:var(--muted);font-weight:400;font-size:13.5px;text-decoration:underline;margin-inline-start:auto}
+.linkbtn:hover{background:none;color:var(--ink)}
 .msg{min-height:1.4em;color:var(--rose);font-size:14.5px}
 .total{font-size:15px;color:var(--gold);font-variant-numeric:tabular-nums}
 .total b{font-size:20px}
@@ -77,8 +82,12 @@ footer a{color:var(--muted)}
   <a class="demo" href="./#noa-ido-58ae4">לצפייה בסדרה לדוגמה (קוד: 14.03.2023) ←</a>
 
   <form id="orderForm" novalidate>
-    <h2>הזמנה</h2>
-    <div class="field">
+    <h2 id="formTitle">הזמנה</h2>
+    <div class="forseries" id="forSeries" hidden>
+      <span>פרק נוסף לסדרה</span><b id="forTitle"></b>
+      <button type="button" class="linkbtn" id="notOurs">זו לא הסדרה שלנו</button>
+    </div>
+    <div class="field" id="typeField">
       <span class="label" id="typeLabel">מה מזמינים?</span>
       <div class="chips" role="radiogroup" aria-labelledby="typeLabel">
         <label><input type="radio" name="order_type" value="series" checked> סדרה חדשה</label>
@@ -90,11 +99,11 @@ footer a{color:var(--muted)}
       <select id="episodes" name="episodes"></select>
       <div class="total" id="total" aria-live="polite"></div>
     </div>
-    <div class="field">
+    <div class="field" id="namesField">
       <label for="names" id="namesLabel">השמות שלכם</label>
       <input type="text" id="names" name="names" maxlength="120" placeholder="למשל: נועה ועידו" required>
     </div>
-    <div class="field">
+    <div class="field" id="occField">
       <span class="label" id="occLabel">לאיזו הזדמנות?</span>
       <div class="chips" role="radiogroup" aria-labelledby="occLabel">
         <label><input type="radio" name="occasion" value="יום הולדת" checked> יום הולדת</label>
@@ -108,7 +117,7 @@ footer a{color:var(--muted)}
       <input type="text" id="met_on" name="met_on" inputmode="numeric" maxlength="40" placeholder="DD.MM.YYYY" dir="ltr" style="text-align:right">
     </div>
     <div class="field">
-      <label for="wish">ספרו לנו קצת <span class="hint">(לא חובה)</span></label>
+      <label for="wish" id="wishLabel">ספרו לנו קצת <span class="hint">(לא חובה)</span></label>
       <textarea id="wish" name="wish" maxlength="1500" placeholder="איך הכרתם, אילו רגעים תרצו שיהיו בסדרה, מתי צריך את זה מוכן..."></textarea>
     </div>
     <div class="field">
@@ -121,7 +130,7 @@ footer a{color:var(--muted)}
       </div>
       <input type="text" id="contact" name="contact" maxlength="120" placeholder="מספר טלפון" aria-labelledby="cmLabel" required>
     </div>
-    <label class="check"><input type="checkbox" id="surprise" name="surprise"><span>זו הפתעה לבן או לבת הזוג. נדאג לא לחשוף כלום.</span></label>
+    <label class="check" id="surpriseLbl"><input type="checkbox" id="surprise" name="surprise"><span>זו הפתעה לבן או לבת הזוג. נדאג לא לחשוף כלום.</span></label>
     <label class="check"><input type="checkbox" id="consent" name="consent" required><span>קראתי ואני מסכים/ה ל<a href="terms.html" target="_blank" rel="noopener">תנאי השימוש ומדיניות הפרטיות</a></span></label>
     <div class="hp" aria-hidden="true"><label for="website">אתר</label><input type="text" id="website" name="website" tabindex="-1" autocomplete="off"></div>
     <button type="submit" id="sendBtn">שליחת הזמנה</button>
@@ -168,7 +177,31 @@ document.querySelectorAll("input[name=order_type]").forEach(r => r.addEventListe
 $("episodes").addEventListener("change", updateType);
 const want = new URLSearchParams(location.search).get("type");
 if(want === "episode") document.querySelector('input[name=order_type][value=episode]').checked = true;
-updateType();
+
+/* Remembered on this device only: the series the visitor opened (saved by the series page after the code),
+   and their own details from a previous order. Nothing here leaves the device except with the order itself. */
+const load = k => { try{ return JSON.parse(localStorage.getItem(k) || "null"); }catch(e){ return null; } };
+const save = (k, v) => { try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
+let SERIES = want === "episode" ? load("shelanu_series") : null;
+if(SERIES && !SERIES.slug) SERIES = null;
+function seriesMode(on){
+  $("forSeries").hidden = !on;
+  ["typeField","namesField","occField","metField","surpriseLbl"].forEach(id => $(id).hidden = on);
+  $("formTitle").textContent = on ? "עוד פרק לסדרה שלכם" : "הזמנה";
+  $("wishLabel").innerHTML = on ? 'איזה רגע תרצו בפרק החדש? <span class="hint">(לא חובה)</span>' : 'ספרו לנו קצת <span class="hint">(לא חובה)</span>';
+  $("wish").placeholder = on ? "מה קרה שם, מתי זה היה, ומתי צריך את הפרק מוכן..." : "איך הכרתם, אילו רגעים תרצו שיהיו בסדרה, מתי צריך את זה מוכן...";
+  if(on){ $("forTitle").textContent = SERIES.title || SERIES.names || "שלכם"; document.querySelector('input[name=order_type][value=episode]').checked = true; }
+  updateType();
+}
+$("notOurs").addEventListener("click", () => { SERIES = null; seriesMode(false); $("names").focus(); });
+const ME = load("shelanu_me");
+if(ME){
+  if(ME.names) $("names").value = ME.names;
+  const r = ME.contact_method && document.querySelector(`input[name=contact_method][value=${ME.contact_method}]`);
+  if(r){ r.checked = true; r.dispatchEvent(new Event("change")); }
+  if(ME.contact) $("contact").value = ME.contact;
+}
+seriesMode(!!SERIES);
 
 $("orderForm").addEventListener("submit", async ev => {
   ev.preventDefault();
@@ -179,7 +212,8 @@ $("orderForm").addEventListener("submit", async ev => {
     wish: $("wish").value.trim(), contact_method: val("contact_method"), contact: $("contact").value.trim(),
     surprise: $("surprise").checked, consent: $("consent").checked, website: $("website").value
   };
-  if(order.names.length < 2){ say("כתבו את השמות שלכם."); $("names").focus(); return; }
+  if(SERIES){ order.series = SERIES.slug; order.order_type = "episode"; order.names = order.names || SERIES.names || ""; order.occasion = ""; order.met_on = ""; order.surprise = false; }
+  if(!SERIES && order.names.length < 2){ say("כתבו את השמות שלכם."); $("names").focus(); return; }
   if(order.contact.length < 3){ say("כתבו איך לחזור אליכם."); $("contact").focus(); return; }
   if(!order.consent){ say("כדי לשלוח צריך לאשר את תנאי השימוש."); $("consent").focus(); return; }
   $("sendBtn").disabled = true; say("");
@@ -188,7 +222,9 @@ $("orderForm").addEventListener("submit", async ev => {
   catch(e){ res = { status:"network" }; }
   $("sendBtn").disabled = false;
   if(res.status === "ok"){
+    save("shelanu_me", { names: SERIES ? (ME && ME.names) || "" : order.names, contact_method: order.contact_method, contact: order.contact });
     $("orderForm").hidden = true; $("done").hidden = false;
+    if(SERIES) $("doneText").textContent = "נחזור אליכם בהקדם כדי לקבל את הסרטונים והתמונות לפרק החדש.";
     if(order.surprise) $("doneText").textContent = "נחזור אליכם בהקדם, ובשקט, כדי שההפתעה תישאר הפתעה.";
     $("done").scrollIntoView({ behavior:"smooth", block:"center" });
     return;

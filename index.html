@@ -122,6 +122,10 @@ linear-gradient(160deg,#3d1c2c,#140b11 72%)}
 .btn.soft{background:rgba(187,163,173,.24)}
 .btn.soft:hover{background:rgba(187,163,173,.36)}
 /* rows */
+.askmore{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 20px;margin-top:6px;padding:20px 22px;border:1px dashed rgba(240,137,156,.55);border-radius:14px;background:rgba(240,137,156,.06)}
+.askmore b{display:block;font-size:17px}
+.askmore span{color:var(--muted);font-size:14.5px}
+#moreBtn{text-decoration:none}
 .rows{display:flex;flex-direction:column;gap:30px;padding-bottom:90px;margin-top:-6px;position:relative;z-index:2}
 .row h2{margin:0 0 12px;font-size:19px;font-weight:500;display:flex;align-items:baseline;gap:10px}
 .row h2 small{font-size:14px;color:var(--muted);font-weight:400}
@@ -309,8 +313,8 @@ linear-gradient(160deg,#3d1c2c,#140b11 72%)}
 <li><div><b>אנחנו עורכים</b><span>עריכה, מוזיקה ברישיון, שם לפרק ותקציר.</span></div></li>
 <li><div><b>הפרק עולה לסדרה</b><span>מקבלים הודעה, והפרק מחכה לכם כאן.</span></div></li>
 </ol>
-<p class="line">משלמים על כל פרק בנפרד. הסדרה נשארת שלכם, וכל פרק חדש מצטרף לעונה.</p>
-<div class="actions"><button class="btn solid" data-close="order">הבנתי</button></div>
+<p class="line">כל פרק נוסף 50 ₪. הסדרה נשארת שלכם, וכל פרק חדש מצטרף לעונה.</p>
+<div class="actions"><a class="btn solid" id="moreBtn" href="order.html?type=episode"><svg><use href="#plus"/></svg>להזמנת פרק נוסף</a><button class="btn soft" data-close="order">אחר כך</button></div>
 </div>
 </div>
 </div>
@@ -426,6 +430,7 @@ else say("אין חיבור כרגע. בדקו את האינטרנט ונסו ש
 /* ---------- after unlock: intro → door → home ---------- */
 function start(res){
 DATA = res;
+try{ localStorage.setItem("shelanu_series", JSON.stringify({ slug, title: res.couple.title || "", names: res.couple.names || "" })); }catch(e){}
 const all = res.episodes.map((e, i) => ({ ...e, c: colorsOf(e, i) }));
 EPS = all.filter(e => e.kind === "episode");
 SPECIALS = all.filter(e => e.kind === "special");
@@ -476,6 +481,7 @@ html += row(`עונה ${s}`, seasonYears(list), (idx === 0 ? list.slice().revers
 if(SPECIALS.length) html += row("ספיישלים", "קצרים, מצחיקים, רק שלכם",
 SPECIALS.map(s => `<button class="tile vert" data-info="${esc(s.id)}" aria-label="${esc(s.title)}"><span class="shot" ${art(s)}>${picture(s)}<span class="label">${esc(s.title)}</span>${s.duration ? `<span class="dur">${esc(s.duration)}</span>` : ""}</span></button>`).join(""));
 if(!EPS.length && !SPECIALS.length) html = `<div class="gutter empty-row">הפרק הראשון שלכם בדרך. נעדכן ברגע שהוא עולה.</div>`;
+else html += `<div class="gutter"><section class="askmore"><div><b>יש לכם עוד רגע ששווה פרק?</b><span>שלחו לנו אותו ונוסיף אותו לסדרה. 50 ₪ לפרק.</span></div><button class="btn solid" id="moreOpen"><svg><use href="#plus"/></svg>הזמנת פרק נוסף</button></section></div>`;
 $("rows").innerHTML = html;
 }
 function greeting(){ const h = new Date().getHours(); return h < 5 ? "לילה טוב" : h < 12 ? "בוקר טוב" : h < 17 ? "צהריים טובים" : "ערב טוב"; }
@@ -563,7 +569,7 @@ document.addEventListener("click", ev => {
 const play = ev.target.closest("[data-play]"); if(play){ openPlayer(byId(play.dataset.play)); return; }
 const info = ev.target.closest("[data-info]"); if(info){ openDetail(byId(info.dataset.info)); return; }
 const cl = ev.target.closest("[data-close]"); if(cl){ $(cl.dataset.close).hidden = true; return; }
-if(ev.target.closest("#soonBtn")){ $("order").hidden = false; return; }
+if(ev.target.closest("#soonBtn") || ev.target.closest("#moreOpen")){ $("order").hidden = false; return; }
 if(ev.target.classList.contains("overlay")) ev.target.hidden = true;
 });
 document.addEventListener("keydown", ev => {
