@@ -51,6 +51,8 @@ button:hover{background:var(--gold)}
 button[disabled]{opacity:.6;cursor:wait}
 button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 .msg{min-height:1.4em;color:var(--rose);font-size:14.5px}
+.total{font-size:15px;color:var(--gold);font-variant-numeric:tabular-nums}
+.total b{font-size:20px}
 .done{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:30px 22px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
 .done svg{width:48px;height:48px;fill:var(--rose)}
 .done h2{margin:0;font-family:var(--f-display);font-weight:400;font-size:34px}
@@ -75,9 +77,21 @@ footer a{color:var(--muted)}
   <a class="demo" href="./#noa-ido-58ae4">לצפייה בסדרה לדוגמה (קוד: 14.03.2023) ←</a>
 
   <form id="orderForm" novalidate>
-    <h2>הזמנת סדרה</h2>
+    <h2>הזמנה</h2>
     <div class="field">
-      <label for="names">השמות שלכם</label>
+      <span class="label" id="typeLabel">מה מזמינים?</span>
+      <div class="chips" role="radiogroup" aria-labelledby="typeLabel">
+        <label><input type="radio" name="order_type" value="series" checked> סדרה חדשה</label>
+        <label><input type="radio" name="order_type" value="episode"> פרק נוסף לסדרה קיימת</label>
+      </div>
+    </div>
+    <div class="field">
+      <label for="episodes" id="epLabel">כמה פרקים בסך הכול?</label>
+      <select id="episodes" name="episodes"></select>
+      <div class="total" id="total" aria-live="polite"></div>
+    </div>
+    <div class="field">
+      <label for="names" id="namesLabel">השמות שלכם</label>
       <input type="text" id="names" name="names" maxlength="120" placeholder="למשל: נועה ועידו" required>
     </div>
     <div class="field">
@@ -89,7 +103,7 @@ footer a{color:var(--muted)}
         <label><input type="radio" name="occasion" value="אחר"> אחר</label>
       </div>
     </div>
-    <div class="field">
+    <div class="field" id="metField">
       <label for="met_on">מתי הכרתם? <span class="hint">(זה יהיה הקוד של הסדרה. אפשר גם בערך.)</span></label>
       <input type="text" id="met_on" name="met_on" inputmode="numeric" maxlength="40" placeholder="DD.MM.YYYY" dir="ltr" style="text-align:right">
     </div>
@@ -133,10 +147,34 @@ document.querySelectorAll('input[name=contact_method]').forEach(r => r.addEventL
 $("contact").placeholder = PH.whatsapp; $("contact").type = "tel";
 const val = n => (document.querySelector(`input[name=${n}]:checked`) || {}).value;
 
+/* what is being ordered: a new series (first episode included) or extra episodes for an existing one */
+const PRICE_SERIES = 100, PRICE_EPISODE = 50;
+for(let i = 1; i <= 10; i++) $("episodes").insertAdjacentHTML("beforeend", `<option value="${i}">${i}</option>`);
+function updateType(){
+  const t = val("order_type"), n = Number($("episodes").value) || 1;
+  if(t === "series"){
+    $("epLabel").textContent = "כמה פרקים בסך הכול? (הפרק הראשון כלול)";
+    $("namesLabel").textContent = "השמות שלכם";
+    $("metField").hidden = false;
+    $("total").innerHTML = `סה"כ: <b>${PRICE_SERIES + (n - 1) * PRICE_EPISODE} ₪</b>` + (n > 1 ? ` (סדרה ${PRICE_SERIES} ₪ + ${n - 1} × ${PRICE_EPISODE} ₪)` : " (סדרה עם הפרק הראשון)");
+  } else {
+    $("epLabel").textContent = "כמה פרקים להוסיף?";
+    $("namesLabel").textContent = "השמות שלכם, כמו בסדרה הקיימת";
+    $("metField").hidden = true;
+    $("total").innerHTML = `סה"כ: <b>${n * PRICE_EPISODE} ₪</b>` + (n > 1 ? ` (${n} × ${PRICE_EPISODE} ₪)` : "");
+  }
+}
+document.querySelectorAll("input[name=order_type]").forEach(r => r.addEventListener("change", updateType));
+$("episodes").addEventListener("change", updateType);
+const want = new URLSearchParams(location.search).get("type");
+if(want === "episode") document.querySelector('input[name=order_type][value=episode]').checked = true;
+updateType();
+
 $("orderForm").addEventListener("submit", async ev => {
   ev.preventDefault();
   const say = t => $("msg").textContent = t;
   const order = {
+    order_type: val("order_type"), episodes: $("episodes").value,
     names: $("names").value.trim(), occasion: val("occasion"), met_on: $("met_on").value.trim(),
     wish: $("wish").value.trim(), contact_method: val("contact_method"), contact: $("contact").value.trim(),
     surprise: $("surprise").checked, consent: $("consent").checked, website: $("website").value

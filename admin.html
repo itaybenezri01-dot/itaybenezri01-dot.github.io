@@ -54,6 +54,8 @@ a{color:var(--gold)}
 .item{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
 .item .head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}
 .item p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.order-type{font-size:15px;color:var(--gold)}
+.order-type b{color:var(--ink)}
 .kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:14px}
 .kv dt{color:var(--muted)}
 .kv dd{margin:0;overflow-wrap:anywhere}
@@ -244,6 +246,7 @@ function contactLink(o){
   if(o.contact_method === "instagram"){ const u = v.replace(/^@/, ""); return `<a href="https://instagram.com/${esc(encodeURIComponent(u))}" target="_blank" rel="noopener">${esc(v)}</a>`; }
   return esc(v);   // phone numbers and emails shown as text: tel/mailto links are unreliable inside some app views
 }
+function orderTotal(o){ const n = Number(o.episodes) || 1; return o.order_type === "episode" ? n * 50 : 100 + (n - 1) * 50; }
 function renderOrders(){
   const n = ORDERS.filter(o => o.status === "new").length;
   $("newCount").hidden = !n; $("newCount").textContent = n;
@@ -251,6 +254,7 @@ function renderOrders(){
   $("tab-orders").innerHTML = ORDERS.map(o => `
     <article class="item" data-id="${esc(o.id)}">
       <div class="head"><h3>${esc(o.names)}</h3><span class="row"><span class="pill ${esc(o.status)}">${STATUS[o.status] || esc(o.status)}</span>${o.surprise ? '<span class="pill surprise">הפתעה</span>' : ""}</span></div>
+      <div class="order-type"><b>${o.order_type === "episode" ? "פרק נוסף" : "סדרה חדשה"}</b> · ${esc(o.episodes || 1)} ${Number(o.episodes) === 1 ? "פרק" : "פרקים"} · לגבייה: <b>${orderTotal(o)} ₪</b></div>
       <dl class="kv">
         <dt>הזדמנות</dt><dd>${esc(o.occasion || "-")}</dd>
         <dt>הכירו ב</dt><dd>${esc(o.met_on || "-")}</dd>
