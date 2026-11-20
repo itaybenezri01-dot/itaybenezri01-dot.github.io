@@ -119,7 +119,27 @@ footer a{color:var(--muted)}
       <label for="met_on">מתי הכרתם? <span class="hint">(זה יהיה הקוד של הסדרה. אפשר גם בערך.)</span></label>
       <input type="text" id="met_on" name="met_on" inputmode="numeric" maxlength="40" placeholder="DD.MM.YYYY" dir="ltr" style="text-align:right">
     </div>
-    <div class="field">
+    <div class="field" id="epAbout" hidden>
+      <label for="epWhat">על מה הפרק? <span class="hint">(מה קרה, איפה, מתי ומי היה שם)</span></label>
+      <textarea id="epWhat" maxlength="1100" placeholder="למשל: הטיול שלנו לצפון באוגוסט. ישנו בצימר, עשינו קיאק בירדן, ובערב היא הפתיעה אותי עם עוגה. אם הזמנתם כמה פרקים, ספרו על כל אחד."></textarea>
+    </div>
+    <div class="field" id="epTitleField" hidden>
+      <label for="epTitle">שם לפרק <span class="hint">(לא חובה, אם יש לכם רעיון)</span></label>
+      <input type="text" id="epTitle" maxlength="80" placeholder="למשל: הקיאק שהתהפך">
+    </div>
+    <div class="field" id="epMediaField" hidden>
+      <span class="label" id="mediaLabel">מה תשלחו לנו?</span>
+      <div class="chips" role="radiogroup" aria-labelledby="mediaLabel">
+        <label><input type="radio" name="media" value="סרטונים"> סרטונים</label>
+        <label><input type="radio" name="media" value="תמונות"> תמונות</label>
+        <label><input type="radio" name="media" value="סרטונים ותמונות" checked> גם וגם</label>
+      </div>
+    </div>
+    <div class="field" id="epWhenField" hidden>
+      <label for="epWhen">מתי צריך את הפרק מוכן? <span class="hint">(לא חובה)</span></label>
+      <input type="text" id="epWhen" maxlength="60" placeholder="למשל: עד יום הנישואין, 14.12">
+    </div>
+    <div class="field" id="wishField">
       <label for="wish" id="wishLabel">ספרו לנו קצת <span class="hint">(לא חובה)</span></label>
       <textarea id="wish" name="wish" maxlength="1500" placeholder="איך הכרתם, אילו רגעים תרצו שיהיו בסדרה, מתי צריך את זה מוכן..."></textarea>
     </div>
@@ -200,8 +220,8 @@ function seriesMode(on){
   askContact = !on || !!(ME && ME.contact);
   $("contactField").hidden = !askContact; $("knownContact").hidden = askContact;
   $("formTitle").textContent = on ? "עוד פרק לסדרה שלכם" : "הזמנה";
-  $("wishLabel").innerHTML = on ? 'איזה רגע תרצו בפרק החדש? <span class="hint">(לא חובה)</span>' : 'ספרו לנו קצת <span class="hint">(לא חובה)</span>';
-  $("wish").placeholder = on ? "מה קרה שם, מתי זה היה, ומתי צריך את הפרק מוכן..." : "איך הכרתם, אילו רגעים תרצו שיהיו בסדרה, מתי צריך את זה מוכן...";
+  ["epAbout","epTitleField","epMediaField","epWhenField"].forEach(id => $(id).hidden = !on);
+  $("wishField").hidden = on;
   if(on){ $("forTitle").textContent = SERIES.title || SERIES.names || "שלכם"; document.querySelector('input[name=order_type][value=episode]').checked = true; }
   updateType();
 }
@@ -227,6 +247,18 @@ $("orderForm").addEventListener("submit", async ev => {
     surprise: $("surprise").checked, consent: $("consent").checked, website: $("website").value
   };
   if(SERIES && !askContact){ order.contact = ""; }
+  if(SERIES){
+    // one readable note for the owner: what the episode is about, a title idea, what material is coming, and the deadline
+    const what = $("epWhat").value.trim();
+    if(what.length < 10){ say("ספרו לנו בכמה מילים על מה הפרק, כדי שנדע מה לבנות."); $("epWhat").focus(); return; }
+    const title = $("epTitle").value.trim(), when = $("epWhen").value.trim();
+    order.wish = [
+      title ? `שם לפרק: ${title}` : null,
+      `חומרים: ${val("media") || "-"}`,
+      when ? `מוכן עד: ${when}` : null,
+      "", "על הפרק:", what
+    ].filter(x => x !== null).join("\n");
+  }
   if(SERIES){ order.consent = true; order.series = SERIES.slug; order.order_type = "episode"; order.names = order.names || SERIES.names || ""; order.occasion = ""; order.met_on = ""; order.surprise = false; }
   if(!SERIES && order.names.length < 2){ say("כתבו את השמות שלכם."); $("names").focus(); return; }
   if(askContact && order.contact.length < 3){ say("כתבו איך לחזור אליכם."); $("contact").focus(); return; }
