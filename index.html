@@ -399,6 +399,7 @@ try{ chimeAudio.currentTime = 0; const p = chimeAudio.play(); if(p && p.catch) p
 }
 /* ---------- lock screen ---------- */
 if(!slug){
+location.replace("home.html");
 $("lockHint").textContent = "כל זיכרון שלכם הופך לפרק, בסדרה פרטית שרק שניכם יכולים לפתוח. כבר יש לכם סדרה? פתחו את הקישור המלא שקיבלתם מאיתנו.";
 $("codeForm").hidden = true; $("orderLink").hidden = false; $("orderSmall").hidden = true;
 }
