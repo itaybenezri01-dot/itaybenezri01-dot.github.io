@@ -55,6 +55,9 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offse
 .forseries b{font-family:var(--f-display);font-weight:400;font-size:22px;color:var(--gold)}
 .linkbtn{background:none;padding:0;border-radius:0;color:var(--muted);font-weight:400;font-size:13.5px;text-decoration:underline;margin-inline-start:auto}
 .linkbtn:hover{background:none;color:var(--ink)}
+.known{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;color:var(--muted);font-size:14.5px}
+.agree{margin:0;color:var(--muted);font-size:13.5px}
+.agree a{color:var(--gold)}
 .msg{min-height:1.4em;color:var(--rose);font-size:14.5px}
 .total{font-size:15px;color:var(--gold);font-variant-numeric:tabular-nums}
 .total b{font-size:20px}
@@ -120,7 +123,11 @@ footer a{color:var(--muted)}
       <label for="wish" id="wishLabel">ספרו לנו קצת <span class="hint">(לא חובה)</span></label>
       <textarea id="wish" name="wish" maxlength="1500" placeholder="איך הכרתם, אילו רגעים תרצו שיהיו בסדרה, מתי צריך את זה מוכן..."></textarea>
     </div>
-    <div class="field">
+    <div class="known" id="knownContact" hidden>
+      <span>נחזור אליכם באותה דרך כמו בהזמנה הקודמת.</span>
+      <button type="button" class="linkbtn" id="changeContact">לעדכן פרטי קשר</button>
+    </div>
+    <div class="field" id="contactField">
       <span class="label" id="cmLabel">איך לחזור אליכם?</span>
       <div class="chips" role="radiogroup" aria-labelledby="cmLabel">
         <label><input type="radio" name="contact_method" value="whatsapp" checked> וואטסאפ</label>
@@ -131,7 +138,8 @@ footer a{color:var(--muted)}
       <input type="text" id="contact" name="contact" maxlength="120" placeholder="מספר טלפון" aria-labelledby="cmLabel" required>
     </div>
     <label class="check" id="surpriseLbl"><input type="checkbox" id="surprise" name="surprise"><span>זו הפתעה לבן או לבת הזוג. נדאג לא לחשוף כלום.</span></label>
-    <label class="check"><input type="checkbox" id="consent" name="consent" required><span>קראתי ואני מסכים/ה ל<a href="terms.html" target="_blank" rel="noopener">תנאי השימוש ומדיניות הפרטיות</a></span></label>
+    <p class="agree" id="agreeNote" hidden>בשליחה אתם מאשרים שוב את <a href="terms.html" target="_blank" rel="noopener">תנאי השימוש ומדיניות הפרטיות</a>.</p>
+    <label class="check" id="consentLbl"><input type="checkbox" id="consent" name="consent" required><span>קראתי ואני מסכים/ה ל<a href="terms.html" target="_blank" rel="noopener">תנאי השימוש ומדיניות הפרטיות</a></span></label>
     <div class="hp" aria-hidden="true"><label for="website">אתר</label><input type="text" id="website" name="website" tabindex="-1" autocomplete="off"></div>
     <button type="submit" id="sendBtn">שליחת הזמנה</button>
     <div class="msg" id="msg" role="status" aria-live="polite"></div>
@@ -186,13 +194,19 @@ let SERIES = want === "episode" ? load("shelanu_series") : null;
 if(SERIES && !SERIES.slug) SERIES = null;
 function seriesMode(on){
   $("forSeries").hidden = !on;
-  ["typeField","namesField","occField","metField","surpriseLbl"].forEach(id => $(id).hidden = on);
+  ["typeField","namesField","occField","metField","surpriseLbl","consentLbl"].forEach(id => $(id).hidden = on);
+  $("agreeNote").hidden = !on;
+  // returning couple: contact comes from their earlier order unless they want to change it (or we have none on file)
+  askContact = !on || !!(ME && ME.contact);
+  $("contactField").hidden = !askContact; $("knownContact").hidden = askContact;
   $("formTitle").textContent = on ? "עוד פרק לסדרה שלכם" : "הזמנה";
   $("wishLabel").innerHTML = on ? 'איזה רגע תרצו בפרק החדש? <span class="hint">(לא חובה)</span>' : 'ספרו לנו קצת <span class="hint">(לא חובה)</span>';
   $("wish").placeholder = on ? "מה קרה שם, מתי זה היה, ומתי צריך את הפרק מוכן..." : "איך הכרתם, אילו רגעים תרצו שיהיו בסדרה, מתי צריך את זה מוכן...";
   if(on){ $("forTitle").textContent = SERIES.title || SERIES.names || "שלכם"; document.querySelector('input[name=order_type][value=episode]').checked = true; }
   updateType();
 }
+let askContact = true;
+$("changeContact").addEventListener("click", () => { askContact = true; $("contactField").hidden = false; $("knownContact").hidden = true; $("contact").focus(); });
 $("notOurs").addEventListener("click", () => { SERIES = null; seriesMode(false); $("names").focus(); });
 const ME = load("shelanu_me");
 if(ME){
@@ -212,9 +226,10 @@ $("orderForm").addEventListener("submit", async ev => {
     wish: $("wish").value.trim(), contact_method: val("contact_method"), contact: $("contact").value.trim(),
     surprise: $("surprise").checked, consent: $("consent").checked, website: $("website").value
   };
-  if(SERIES){ order.series = SERIES.slug; order.order_type = "episode"; order.names = order.names || SERIES.names || ""; order.occasion = ""; order.met_on = ""; order.surprise = false; }
+  if(SERIES && !askContact){ order.contact = ""; }
+  if(SERIES){ order.consent = true; order.series = SERIES.slug; order.order_type = "episode"; order.names = order.names || SERIES.names || ""; order.occasion = ""; order.met_on = ""; order.surprise = false; }
   if(!SERIES && order.names.length < 2){ say("כתבו את השמות שלכם."); $("names").focus(); return; }
-  if(order.contact.length < 3){ say("כתבו איך לחזור אליכם."); $("contact").focus(); return; }
+  if(askContact && order.contact.length < 3){ say("כתבו איך לחזור אליכם."); $("contact").focus(); return; }
   if(!order.consent){ say("כדי לשלוח צריך לאשר את תנאי השימוש."); $("consent").focus(); return; }
   $("sendBtn").disabled = true; say("");
   let res;
@@ -222,7 +237,7 @@ $("orderForm").addEventListener("submit", async ev => {
   catch(e){ res = { status:"network" }; }
   $("sendBtn").disabled = false;
   if(res.status === "ok"){
-    save("shelanu_me", { names: SERIES ? (ME && ME.names) || "" : order.names, contact_method: order.contact_method, contact: order.contact });
+    if(order.contact) save("shelanu_me", { names: SERIES ? (ME && ME.names) || "" : order.names, contact_method: order.contact_method, contact: order.contact });
     $("orderForm").hidden = true; $("done").hidden = false;
     if(SERIES) $("doneText").textContent = "נחזור אליכם בהקדם כדי לקבל את הסרטונים והתמונות לפרק החדש.";
     if(order.surprise) $("doneText").textContent = "נחזור אליכם בהקדם, ובשקט, כדי שההפתעה תישאר הפתעה.";
@@ -230,6 +245,7 @@ $("orderForm").addEventListener("submit", async ev => {
     return;
   }
   if(res.status === "too_many") say("נשלחו כבר כמה הזמנות מהמכשיר הזה. נסו שוב בעוד שעה.");
+  else if(res.status === "bad" && res.field === "contact" && !askContact){ askContact = true; $("contactField").hidden = false; $("knownContact").hidden = true; say("לא מצאנו פרטי קשר מההזמנה הקודמת. כתבו איך לחזור אליכם."); $("contact").focus(); }
   else if(res.status === "bad") say("משהו בטופס חסר. בדקו את השמות ואת פרטי הקשר ונסו שוב.");
   else say("לא הצלחנו לשלוח כרגע. בדקו את החיבור לאינטרנט ונסו שוב.");
 });

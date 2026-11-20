@@ -224,7 +224,7 @@ function showTab(name){
   ["orders","couples","create"].forEach(t => $("tab-" + t).hidden = t !== name);
   $("couple").hidden = true;
 }
-document.querySelectorAll("[role=tab]").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+document.querySelectorAll("[role=tab]").forEach(b => b.addEventListener("click", () => { fromOrder = null; showTab(b.dataset.tab); }));
 
 async function refresh(){
   try{
@@ -278,7 +278,7 @@ $("tab-orders").addEventListener("click", ev => {
   if(os){ showTab("couples"); openCouple(os.dataset.openSeries); return; }
   const b = ev.target.closest("[data-make]"); if(!b) return;
   const o = ORDERS.find(x => x.id === b.closest("[data-id]").dataset.id);
-  showTab("create"); $("cResult").hidden = true;
+  showTab("create"); $("cResult").hidden = true; fromOrder = o.id;
   $("cNames").value = o.names; $("cInitials").value = initialsOf(o.names);
   const m = (o.met_on || "").match(/(\d{1,2})\D+(\d{1,2})\D+(\d{4})/);
   if(m){ $("cDate").value = `${m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`; codeFromDate(); }
@@ -333,6 +333,7 @@ $("cNames").addEventListener("input", () => { if(!$("cInitials").dataset.touched
 $("cInitials").addEventListener("input", () => $("cInitials").dataset.touched = "1");
 $("cDate").addEventListener("change", codeFromDate);
 let created = null;
+let fromOrder = null; // order the new couple is being made from; linked on create so later episode orders know their contact
 $("tab-create").addEventListener("submit", async ev => {
   ev.preventDefault();
   const say = (t, ok) => { $("cMsg").textContent = t; $("cMsg").classList.toggle("ok", !!ok); };
@@ -342,8 +343,8 @@ $("tab-create").addEventListener("submit", async ev => {
   try{
     const r = await call("create_couple", { names: $("cNames").value.trim(), title: $("cTitle").value.trim() || "איך הכל התחיל",
       blurb: $("cBlurb").value.trim() || null, together_since: $("cDate").value || null,
-      initials: $("cInitials").value.trim().split(/\s+/).filter(Boolean).slice(0,2), code, slug_hint: $("cSlug").value.trim() || null });
-    created = r.slug; say("נוצר!", true);
+      initials: $("cInitials").value.trim().split(/\s+/).filter(Boolean).slice(0,2), code, slug_hint: $("cSlug").value.trim() || null, order_id: fromOrder });
+    created = r.slug; fromOrder = null; say("נוצר!", true);
     const link = SITE + "#" + r.slug;
     $("cShare").textContent = `היי ${$("cNames").value.trim()} ❤️\nהסדרה הפרטית שלכם מוכנה!\n\nהקישור: ${link}\nהקוד: התאריך שבו הכרתם (יום, חודש ושנה)\n\nצפייה נעימה 🎬\nשלנו`;
     $("cResult").hidden = false;
