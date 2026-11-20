@@ -84,6 +84,9 @@ background:radial-gradient(circle,rgba(242,170,140,.38) 0%,rgba(190,70,110,.22) 
 .nav .me{margin-inline-start:auto;display:flex}
 .nav .me b{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-family:var(--f-display);font-weight:400;font-size:16px;border:2px solid var(--night)}
 .nav .me b:first-child{background:linear-gradient(135deg,#f7b2a6,#b44a6a);margin-inline-end:-8px;z-index:1}
+.nav .me .ph{width:34px;height:34px;border-radius:50%;overflow:hidden;border:2px solid var(--rose);display:block}
+.nav .me .ph img,.pair .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.pair .ph{width:clamp(120px,32vw,156px);aspect-ratio:1;border-radius:50%;overflow:hidden;border:3px solid var(--rose);box-shadow:0 0 0 6px rgba(240,137,156,.15),0 14px 34px rgba(0,0,0,.45);display:block}
 .nav .me b:last-child{background:linear-gradient(135deg,#f6d39a,#8f5b3b)}
 .billboard{position:relative;isolation:isolate;min-height:min(86vh,720px);display:flex;align-items:flex-end;padding-top:110px;padding-bottom:40px;overflow:hidden}
 .billboard .art{position:absolute;inset:0;z-index:-2;
@@ -448,8 +451,9 @@ document.querySelectorAll(".word span").forEach((s,i) => s.style.animationDelay 
 $("enterBtn").addEventListener("click", () => { $("door").hidden = true; $("home").hidden = false; window.scrollTo(0,0); });
 function buildHome(){
 const c = DATA.couple, ini = (c.initials || []).slice(0,2);
-const avatars = ini.map(x => `<b>${esc(x)}</b>`).join("") || "<b>♥</b>";
-$("doorPair").innerHTML = ini.map(x => `<span>${esc(x)}</span>`).join("");
+const photo = c.photo_url ? `<img src="${esc(c.photo_url)}" alt="">` : "";
+const avatars = photo ? `<i class="ph">${photo}</i>` : (ini.map(x => `<b>${esc(x)}</b>`).join("") || "<b>♥</b>");
+$("doorPair").innerHTML = photo ? `<i class="ph">${photo}</i>` : ini.map(x => `<span>${esc(x)}</span>`).join("");
 $("doorTitle").textContent = `${greeting()}, ${c.names}`;
 const latest = EPS[EPS.length - 1];
 $("doorSub").textContent = latest ? `הפרק האחרון: "${latest.title}"` : "הסדרה שלכם מחכה";

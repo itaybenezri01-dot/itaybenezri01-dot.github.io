@@ -59,6 +59,11 @@ a{color:var(--gold)}
 .kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:14px}
 .kv dt{color:var(--muted)}
 .kv dd{margin:0;overflow-wrap:anywhere}
+.photo-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.photo-row .col{display:flex;flex-direction:column;gap:8px;flex:1;min-width:200px}
+.avatar{width:84px;height:84px;border-radius:50%;overflow:hidden;border:2px solid var(--line);display:grid;place-items:center;background:var(--night);font-family:var(--f-display);font-size:28px;color:var(--muted);flex:none}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.ep .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .ep{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
 .ep:first-child{border-top:0}
 .ep .n{font-family:var(--f-display);font-size:24px;color:var(--muted);text-align:center}
@@ -132,6 +137,26 @@ progress{width:100%;height:8px;accent-color:var(--rose)}
         <div class="row small"><span class="muted">קישור:</span><a id="cpLink" target="_blank" rel="noopener"></a><button id="cpCopy" type="button">העתקה</button></div>
         <div id="cpEps"></div>
       </div>
+      <form id="editForm" class="card">
+        <h3>פרטי הזוג</h3>
+        <div class="photo-row">
+          <div class="avatar" id="pAvatar" aria-hidden="true"></div>
+          <div class="col">
+            <label>תמונת הזוג <span class="small muted">(מופיעה בסדרה במקום האותיות)</span><input id="pFile" type="file" accept="image/jpeg,image/png,image/webp"></label>
+            <button type="button" class="danger" id="pRemove" hidden>הסרת התמונה</button>
+          </div>
+        </div>
+        <div class="grid">
+          <label>שמות<input id="pNames" required></label>
+          <label>ראשי תיבות<input id="pInitials" placeholder="נ ע"></label>
+          <label>שם הסדרה<input id="pTitle"></label>
+          <label>תאריך שהכירו<input id="pDate" type="date"></label>
+        </div>
+        <label>תיאור הסדרה<textarea id="pBlurb"></textarea></label>
+        <p class="small muted">שינוי התאריך כאן לא משנה את קוד הכניסה. בשביל זה יש "החלפת קוד" למטה.</p>
+        <div class="row"><button class="primary" type="submit" id="pBtn">שמירת השינויים</button><span class="msg" id="pMsg" role="status"></span></div>
+      </form>
+      <input type="file" id="posterPick" accept="image/jpeg,image/png,image/webp" hidden>
       <form id="codeForm" class="card">
         <h3>החלפת קוד הכניסה</h3>
         <p class="small muted">אם הזוג שכח את הקוד או שהוא דלף. אחרי ההחלפה הקוד הישן מפסיק לעבוד.</p>
@@ -301,6 +326,7 @@ async function openCouple(slug){
   $("couple").hidden = false;
   $("cpTitle").textContent = `${current.names} · ${current.title}`;
   $("kMsg").textContent = "";
+  fillEdit(current);
   $("cpLink").href = SITE + "#" + slug; $("cpLink").textContent = SITE.replace("https://","") + "#" + slug;
   await loadEpisodes();
 }
@@ -315,14 +341,76 @@ async function loadEpisodes(){
   $("cpEps").innerHTML = eps.length ? eps.map(e => `
     <div class="ep"><span class="n">${e.kind === "special" ? "★" : esc(e.number ?? "")}</span>
       <span><b>${esc(e.title)}</b><div class="muted small">${e.kind === "special" ? "ספיישל" : "עונה " + esc(e.season)}${e.aired ? " · " + esc(e.aired) : ""}${e.duration ? " · " + esc(e.duration) : ""}${e.has_video ? "" : " · בלי סרטון"}</div></span>
-      <button class="danger" data-del="${esc(e.id)}" data-title="${esc(e.title)}">מחיקה</button></div>`).join("")
+      <span class="acts"><button data-poster="${esc(e.id)}">${e.has_poster ? "החלפת תמונה" : "הוספת תמונה"}</button><button class="danger" data-del="${esc(e.id)}" data-title="${esc(e.title)}">מחיקה</button></span></div>`).join("")
     : `<div class="empty">אין פרקים עדיין. הוסיפו את הפרק הראשון למטה.</div>`;
 }
+let posterFor = null;
 $("cpEps").addEventListener("click", async ev => {
+  const pb = ev.target.closest("[data-poster]");
+  if(pb){ posterFor = pb; $("posterPick").value = ""; $("posterPick").click(); return; }
   const b = ev.target.closest("[data-del]"); if(!b) return;
   if(b.dataset.confirm !== "1"){ b.dataset.confirm = "1"; b.textContent = "בטוח? לחצו שוב"; setTimeout(() => { b.dataset.confirm = ""; b.textContent = "מחיקה"; }, 4000); return; }
   b.disabled = true; await call("delete_episode", { id: b.dataset.del }); await loadEpisodes(); refresh();
 });
+/* replace an episode's picture without deleting the episode */
+$("posterPick").addEventListener("change", async () => {
+  const f = $("posterPick").files[0], b = posterFor; if(!f || !b) return;
+  const label = b.textContent; b.disabled = true; b.textContent = "מעלה...";
+  try{
+    const path = await upload(await shrinkImage(f), current.slug);
+    await call("set_episode_poster", { id: b.dataset.poster, path });
+    await loadEpisodes();
+  }catch(e){ b.disabled = false; b.textContent = label; alertMsg($("kMsg"), "העלאת התמונה נכשלה: " + e.message); }
+});
+
+/* ---------- edit couple ---------- */
+function fillEdit(c){
+  $("pNames").value = c.names || ""; $("pTitle").value = c.title || ""; $("pBlurb").value = c.blurb || "";
+  $("pDate").value = c.together_since ? String(c.together_since).slice(0,10) : "";
+  $("pInitials").value = (c.initials || []).join(" ");
+  showAvatar(c.photo_url, c.initials); $("pRemove").hidden = !c.photo_path; $("pFile").value = ""; $("pMsg").textContent = "";
+  removePhoto = false;
+}
+function showAvatar(url, ini){ $("pAvatar").innerHTML = url ? `<img src="${esc(url)}" alt="">` : esc((ini || []).join("") || "♥"); }
+let removePhoto = false;
+$("pFile").addEventListener("change", () => { const f = $("pFile").files[0]; if(f){ removePhoto = false; showAvatar(URL.createObjectURL(f)); } });
+$("pRemove").addEventListener("click", () => { removePhoto = true; $("pFile").value = ""; showAvatar(null, $("pInitials").value.trim().split(/\s+/)); $("pRemove").hidden = true; });
+$("editForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const say = (t, ok) => { $("pMsg").textContent = t; $("pMsg").classList.toggle("ok", !!ok); };
+  if($("pNames").value.trim().length < 2){ say("צריך לכתוב שמות."); return; }
+  $("pBtn").disabled = true; say("שומר...", true);
+  try{
+    const changes = { names: $("pNames").value.trim(), title: $("pTitle").value.trim(), blurb: $("pBlurb").value.trim(),
+      together_since: $("pDate").value || "", initials: $("pInitials").value.trim().split(/\s+/).filter(Boolean).slice(0,2) };
+    const f = $("pFile").files[0];
+    if(f) changes.photo_path = await upload(await shrinkImage(f, 800), current.slug);
+    else if(removePhoto) changes.photo_path = "";
+    await call("update_couple", { slug: current.slug, changes });
+    await refresh();
+    current = COUPLES.find(c => c.slug === current.slug) || current;
+    $("cpTitle").textContent = `${current.names} · ${current.title}`;
+    fillEdit(current); say("נשמר ✓", true);
+  }catch(e){ say("השמירה נכשלה: " + e.message); }
+  $("pBtn").disabled = false;
+});
+/* phone photos are huge: shrink to a sensible JPEG before uploading */
+function shrinkImage(file, max = 1400){
+  return new Promise(resolve => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      if(k === 1 && file.size < 900000){ URL.revokeObjectURL(url); resolve(file); return; }
+      const cv = document.createElement("canvas"); cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
+      cv.toBlob(b => resolve(b ? new File([b], "photo.jpg", { type: "image/jpeg" }) : file), "image/jpeg", .86);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+function alertMsg(el, t){ el.textContent = t; el.classList.remove("ok"); }
+
 $("back").addEventListener("click", () => showTab("couples"));
 $("cpCopy").addEventListener("click", () => copy($("cpLink").href, $("cpCopy")));
 
